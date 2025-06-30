@@ -130,7 +130,7 @@ def run_forecasting_engine_powerbi(df_clean, forecast_periods=6, save_plots=True
         plt.xticks(rotation=45)
         plt.tight_layout()
     
-    # Main execution
+ 
     if save_plots:
         os.makedirs(output_dir, exist_ok=True)
     
@@ -153,12 +153,12 @@ def run_forecasting_engine_powerbi(df_clean, forecast_periods=6, save_plots=True
         product_data.set_index('Order_Month', inplace=True)
         ts = product_data['Monthly_Sales'].asfreq('MS').fillna(method='ffill')
         
-        # Calculate metrics
+
         growth_rate = ts.pct_change().dropna().mean() * 100 if len(ts) >= 2 else 0
         seasonality_score = (ts.std() / ts.mean()) * 100 if ts.mean() != 0 else 0
         volatility = seasonality_score
         
-        # Generate forecasts
+ 
         arima_pred = arima_forecast(ts, forecast_periods)
         prophet_pred = prophet_forecast(monthly_data, product, forecast_periods)
         baselines = simple_baselines(ts, forecast_periods)
@@ -171,7 +171,7 @@ def run_forecasting_engine_powerbi(df_clean, forecast_periods=6, save_plots=True
             'Trend': baselines['trend']
         }
         
-        # Evaluate and find best model
+
         models_eval = {
             'ARIMA': evaluate_forecast(ts, arima_forecast),
             'Prophet': evaluate_forecast(ts, prophet_forecast, df=monthly_data, product=product),
@@ -189,13 +189,13 @@ def run_forecasting_engine_powerbi(df_clean, forecast_periods=6, save_plots=True
         
         print(f"   🏆 Best: {best_name} (MAE: {best_metrics['MAE']:.1f})")
         
-        # Create and save plot
+
         create_plot(ts, forecasts, product)
         if save_plots:
             plt.savefig(f'{output_dir}/forecast_{product.replace(" ", "_").replace("/", "_")}.png', dpi=300, bbox_inches='tight')
             print(f"   💾 Plot saved")
         
-        # Add historical data to Power BI dataset
+
         for idx, (date, value) in enumerate(ts.items()):
             powerbi_data.append({
                 'Product_Type': product,
@@ -238,7 +238,7 @@ def run_forecasting_engine_powerbi(df_clean, forecast_periods=6, save_plots=True
                 'Forecast_Confidence': 'High' if best_metrics['MAPE'] < 10 else 'Medium' if best_metrics['MAPE'] < 25 else 'Low'
             })
         
-        # Add forecast data to Power BI dataset
+
         if forecasts[best_name] is not None:
             future_dates = pd.date_range(start=ts.index[-1] + pd.DateOffset(months=1), periods=forecast_periods, freq='MS')
             
@@ -285,10 +285,10 @@ def run_forecasting_engine_powerbi(df_clean, forecast_periods=6, save_plots=True
                     'Forecast_Confidence': 'High' if best_metrics['MAPE'] < 10 else 'Medium' if best_metrics['MAPE'] < 25 else 'Low'
                 })
     
-    # Create Power BI DataFrame
+
     powerbi_df = pd.DataFrame(powerbi_data).sort_values(['Product_Type', 'Date']).reset_index(drop=True)
     
-    # Add YoY Growth calculation
+
     if not powerbi_df.empty:
         powerbi_df['YoY_Growth'] = None
         for product in powerbi_df['Product_Type'].unique():
@@ -307,7 +307,7 @@ def run_forecasting_engine_powerbi(df_clean, forecast_periods=6, save_plots=True
                             yoy_growth = ((row['Actual_Value'] - prev_value) / prev_value) * 100
                             powerbi_df.loc[idx, 'YoY_Growth'] = round(yoy_growth, 2)
     
-    # Save the Power BI file
+
     if save_plots and not powerbi_df.empty:
         powerbi_filename = f'{output_dir}/PowerBI_Forecast_Complete.csv'
         powerbi_df.to_csv(powerbi_filename, index=False)
@@ -329,6 +329,3 @@ def run_forecasting_engine_powerbi(df_clean, forecast_periods=6, save_plots=True
         }
     }
 
-# Example usage:
-# results = run_forecasting_engine_powerbi(df_clean, forecast_periods=6)
-# powerbi_df = results['powerbi_data']

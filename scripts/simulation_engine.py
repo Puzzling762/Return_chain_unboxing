@@ -1,4 +1,4 @@
-# Complete Supply Chain Simulation - Streamlined Version
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,7 +7,7 @@ from sklearn.metrics import r2_score, mean_absolute_percentage_error
 import warnings
 warnings.filterwarnings('ignore')
 
-# Configuration Constants
+
 FESTIVAL_PATTERNS = {
     '2024-09': 1.25, '2024-10': 1.60, '2024-11': 1.70, '2024-12': 1.35,
     '2025-01': 0.83, '2025-02': 0.95, '2025-03': 1.00, '2025-04': 1.18,
@@ -52,7 +52,7 @@ def prepare_monthly_data(df, date_col=None, product_col=None, sales_col=None, le
     """Prepare data for simulation"""
     print("🔍 Preparing data...")
     
-    # Auto-detect if not provided
+ 
     if not all([date_col, product_col, sales_col]):
         detected = auto_detect_columns(df)
         date_col = date_col or detected['date']
@@ -69,14 +69,14 @@ def prepare_monthly_data(df, date_col=None, product_col=None, sales_col=None, le
     df_work[date_col] = pd.to_datetime(df_work[date_col])
     df_work['Order_Month'] = df_work[date_col].dt.to_period('M').astype(str)
     
-    # Create monthly aggregates
+ 
     agg_dict = {sales_col: 'sum'}
     if lead_time_col:
         agg_dict[lead_time_col] = 'mean'
     
     monthly_df = df_work.groupby(['Order_Month', product_col], as_index=False).agg(agg_dict)
     
-    # Standardize names
+
     monthly_df = monthly_df.rename(columns={
         product_col: 'Product_Type',
         sales_col: 'Monthly_Sales'
@@ -102,7 +102,7 @@ def run_simulation(df, base_defect_rate=0.05, return_cost=3500, lead_time_sla=7)
         mask = df['Product_Type'] == product
         product_data = df[mask].copy()
         
-        # Demand Simulation
+
         product_data['Simulated_Demand'] = product_data['Monthly_Sales'].astype(float)
         for month in product_data['Order_Month']:
             if month in FESTIVAL_PATTERNS:
@@ -112,7 +112,7 @@ def run_simulation(df, base_defect_rate=0.05, return_cost=3500, lead_time_sla=7)
         product_data['Simulated_Demand'] *= np.random.uniform(0.9, 1.2, len(product_data))
         product_data['Simulated_Demand'] = product_data['Simulated_Demand'].round().astype(int)
         
-        # Defects Simulation
+
         product_data['Defect_Rate'] = base_defect_rate
         for month in product_data['Order_Month']:
             if month in DEFECT_MULTIPLIERS:
@@ -123,7 +123,7 @@ def run_simulation(df, base_defect_rate=0.05, return_cost=3500, lead_time_sla=7)
             (product_data['Simulated_Demand'] * product_data['Defect_Rate']).round().astype(int), 1
         )
         
-        # Lead Time Simulation
+
         product_data['Simulated_Lead_Time'] = product_data['Lead_Time'].copy()
         for month in product_data['Order_Month']:
             if month in LEAD_TIME_ADJUSTMENTS:
@@ -133,12 +133,12 @@ def run_simulation(df, base_defect_rate=0.05, return_cost=3500, lead_time_sla=7)
         product_data['Simulated_Lead_Time'] += np.random.randint(-1, 4, len(product_data))
         product_data['Simulated_Lead_Time'] = np.maximum(product_data['Simulated_Lead_Time'], 1)
         
-        # Business Metrics
+
         product_data['Return_Cost'] = product_data['Simulated_Defects'] * return_cost
         product_data['SLA_Breach'] = (product_data['Simulated_Lead_Time'] > lead_time_sla).astype(int)
         product_data['High_Risk'] = (product_data['Return_Cost'] > 100000).astype(int)
         
-        # Customer Satisfaction
+
         defect_impact = product_data['Simulated_Defects'] / product_data['Simulated_Demand'] * 4
         lead_impact = np.maximum(product_data['Simulated_Lead_Time'] - 10, 0) * 0.25
         product_data['Customer_Satisfaction'] = np.maximum(7.5 - defect_impact - lead_impact, 1.0).round(2)
@@ -158,7 +158,7 @@ def validate_model(df):
         if len(data) < 3:
             continue
             
-        # Simple validation features
+
         data['Month_Num'] = pd.to_datetime(data['Order_Month']).dt.month
         data['Festival_Score'] = data['Order_Month'].map(FESTIVAL_PATTERNS).fillna(1.0)
         
@@ -199,9 +199,9 @@ def create_visualizations(df, save_plots=True):
     
     products = df['Product_Type'].unique()
     
-    # 1. Demand vs Actual Sales
+
     plt.figure(figsize=(15, 8))
-    for i, product in enumerate(products[:4]):  # Limit to 4 products
+    for i, product in enumerate(products[:4]):  
         plt.subplot(2, 2, i+1)
         mask = df['Product_Type'] == product
         data = df[mask]
@@ -217,7 +217,7 @@ def create_visualizations(df, save_plots=True):
     plt.savefig('demand_analysis.png', dpi=300, bbox_inches='tight')
     plt.show()
     
-    # 2. Risk Heatmap
+
     plt.figure(figsize=(12, 8))
     risk_matrix = df.pivot_table(values='Return_Cost', index='Product_Type', 
                                 columns='Order_Month', aggfunc='sum', fill_value=0)
@@ -230,7 +230,7 @@ def create_visualizations(df, save_plots=True):
     plt.savefig('risk_heatmap.png', dpi=300, bbox_inches='tight')
     plt.show()
     
-    # 3. Monte Carlo for each product
+  
     for product in products:
         costs = monte_carlo_analysis(df, product)
         
@@ -272,7 +272,7 @@ def generate_reports(df, validation_results):
             print(f"🎯 Model R² Score: {val['R2_Score']:.3f}")
             print(f"📊 Model MAPE: {val['MAPE']:.1%}")
             
-            # Model quality assessment
+    
             if val['R2_Score'] > 0.8:
                 print("✅ Model Quality: Excellent")
             elif val['R2_Score'] > 0.6:
@@ -297,31 +297,31 @@ def run_simulation_engine(df_input, date_col=None, product_col=None, sales_col=N
     """
     print("🚀 Starting Enhanced Supply Chain Simulation...")
     
-    # Prepare data
+ 
     monthly_df = prepare_monthly_data(df_input, date_col, product_col, sales_col, lead_time_col)
     if monthly_df is None:
         return None
     
-    # Run simulation
+   
     print("⚙️  Running simulation...")
     results_df = run_simulation(monthly_df, base_defect_rate=base_defect_rate)
     
-    # Validate model
+   
     print("🎯 Validating model...")
     validation_results = validate_model(results_df)
     
-    # Generate visualizations
+   
     if save_plots:
         print("📊 Creating visualizations...")
         create_visualizations(results_df, save_plots=True)
     
-    # Export results
+    
     print("💾 Exporting results...")
     
-    # Main results
+   
     results_df.to_csv('supply_chain_simulation_results.csv', index=False)
     
-    # Summary by product
+   
     summary = results_df.groupby('Product_Type').agg({
         'Monthly_Sales': 'sum',
         'Simulated_Demand': 'sum',
@@ -333,7 +333,7 @@ def run_simulation_engine(df_input, date_col=None, product_col=None, sales_col=N
     }).round(2)
     summary.to_csv('product_summary.csv')
     
-    # Monthly summary
+    
     monthly_summary = results_df.groupby('Order_Month').agg({
         'Simulated_Demand': 'sum',
         'Simulated_Defects': 'sum',
@@ -343,7 +343,7 @@ def run_simulation_engine(df_input, date_col=None, product_col=None, sales_col=N
     }).round(2)
     monthly_summary.to_csv('monthly_summary.csv')
     
-    # Generate reports
+   
     generate_reports(results_df, validation_results)
     
     print("\n🎉 Simulation Complete!")
@@ -357,6 +357,3 @@ def run_simulation_engine(df_input, date_col=None, product_col=None, sales_col=N
         print("   ✅ monte_carlo_[product].png - Risk distribution for each product")
     
     return results_df
-
-# Example usage:
-# results = run_simulation_engine(df_clean, save_plots=True)
