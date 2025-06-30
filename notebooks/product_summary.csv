@@ -1,0 +1,6 @@
+Product_Type,Monthly_Sales,Simulated_Demand,Simulated_Defects,Return_Cost,SLA_Breach,High_Risk,Customer_Satisfaction
+Headphones,43216,54168,3197,11189500,13,12,2.15
+Laptop,96980,122096,7263,25420500,13,13,2.5
+Smartphone,168879,218218,13038,45633000,13,13,2.34
+Smartwatch,28014,33492,1978,6923000,13,12,2.38
+Tablet,25835,31672,1867,6534500,13,12,2.15
